@@ -1,0 +1,56 @@
+services:
+
+  traefik:
+    image: traefik:v3
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --entrypoints.web.address=:8080      # HTTP entrypoint
+      - --entrypoints.traefik.address=:9000  # Dashboard entrypoint
+      - --accesslog=true
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  middleware:
+    build:
+      context: .
+    environment:
+      - HYDRA_BASE_URL=http://mock-hydra
+    expose:
+      - "8080"
+    ports:
+      - "8081:8080"
+    labels:
+      - traefik.http.middlewares.enforce-auth.forwardauth.address=http://middleware:8080/enforce-auth
+      - traefik.http.middlewares.enforce-auth.forwardauth.trustforwardheader=true
+      - traefik.http.middlewares.enforce-auth.forwardauth.authResponseHeadersRegex=^X-
+      - traefik.http.middlewares.enrich-auth.forwardauth.address=http://middleware:8080/enrich-auth
+      - traefik.http.middlewares.enrich-auth.forwardauth.trustforwardheader=true
+      - traefik.http.middlewares.enrich-auth.forwardauth.authResponseHeadersRegex=^X-
+
+  mock-hydra:
+    image: python:3.11-slim
+    command: python /app/server.py
+    volumes:
+      - ./mock-hydra/server.py:/app/server.py:ro
+      - ./mock-hydra/introspect.json:/app/introspect.json:ro
+    expose:
+      - "80"
+    ports:
+      - "8082:80"
+
+  whoami-enforce:
+    image: traefik/whoami
+    labels:
+      - traefik.http.routers.whoami-enforce.rule=Host(`whoami-enforce.localhost`)
+      - traefik.http.routers.whoami-enforce.entrypoints=web
+      - traefik.http.routers.whoami-enforce.middlewares=enforce-auth
+
+  whoami-enrich:
+    image: traefik/whoami
+    labels:
+      - traefik.http.routers.whoami-enrich.rule=Host(`whoami-enrich.localhost`)
+      - traefik.http.routers.whoami-enrich.entrypoints=web
+      - traefik.http.routers.whoami-enrich.middlewares=enrich-auth

@@ -1,0 +1,23 @@
+{
+  "active": true,
+  "scope": "offline administrative_actions",
+  "client_id": "faf-moderator-client",
+  "sub": "76365",
+  "exp": 1746221523,
+  "iat": 1746217922,
+  "nbf": 1746217922,
+  "aud": [],
+  "iss": "https://hydra.faforever.com/",
+  "token_type": "Bearer",
+  "token_use": "access_token",
+  "ext": {
+    "preferred_username": "Brutus5000",
+    "roles": [
+      "USER",
+      "ADMIN_ACCOUNT_BAN",
+      "ADMIN_KICK_SERVER",
+      "ADMIN_BROADCAST_MESSAGE"
+    ],
+    "username": "Brutus5000"
+  }
+}
